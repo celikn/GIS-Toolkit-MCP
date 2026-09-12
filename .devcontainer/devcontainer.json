@@ -7,7 +7,8 @@
   "portsAttributes": {
     "9020": {
       "label": "GIS Toolkit MCP",
-      "onAutoForward": "notify"
+      "onAutoForward": "notify",
+      "visibility": "public"
     }
   },
   "postStartCommand": "bash -c 'nohup python3 server.py > /tmp/gis-toolkit-mcp.log 2>&1 &'"
