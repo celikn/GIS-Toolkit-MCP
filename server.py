@@ -18,7 +18,7 @@ import os
 
 from fastmcp import FastMCP
 
-from tools import nearest, raster_ops, vector_ops
+from tools import io_ops, nearest, raster_ops, vector_ops
 
 mcp = FastMCP("GISToolkit")
 
@@ -34,6 +34,8 @@ for fn in (
     raster_ops.reproject_file,
     raster_ops.zonal_statistics_file,
     nearest.nearest_neighbor_file,
+    io_ops.upload_file,
+    io_ops.download_file,
 ):
     mcp.add_tool(fn)
 

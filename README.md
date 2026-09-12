@@ -29,6 +29,8 @@ a file path out, and processes the whole dataset in one call.
 | `nearest_neighbor_file` | k-nearest-neighbor distance + index from one file to another |
 | `add_length_area_field` | Add a length (lines) or area (polygons) field, computed in meters |
 | `select_by_attribute_file` | Keep only features where a field compares true against a value (==, !=, >, <, contains); supports string-encoded dict fields like OSM `tags` via `nested_key` |
+| `upload_file` | Save base64-encoded content into the server's data directory, for clients with no shared filesystem access |
+| `download_file` | Read back a file's content as base64, e.g. to retrieve another tool's output |
 
 ## Running it
 
@@ -56,12 +58,18 @@ The server listens on `http://0.0.0.0:9020/mcp` by default (Streamable HTTP tran
 
 ## Data access
 
-Every tool takes plain file paths (input and output) and reads/writes them directly — there's no
-upload/download layer. This means the MCP server and whatever calls it need to see the same
-filesystem (e.g. a shared Docker volume, or both running on the same host). This is the standard
-pattern for filesystem-oriented MCP servers and needs no code changes to adopt in a new project —
-just mount your data directory into the container and point `GIS_TOOLKIT_DATA_DIR` (or pass
-absolute paths) accordingly.
+Every tool takes plain file paths (input and output) and reads/writes them directly. If your
+client shares a filesystem with the server (e.g. a shared Docker volume, or both running on the
+same host), just mount your data directory and point `GIS_TOOLKIT_DATA_DIR` (or pass absolute
+paths) accordingly — no code changes needed.
+
+If your client does **not** share a filesystem with the server (e.g. a remote user calling a
+publicly hosted instance from their own machine), use `upload_file` to push a local file in as
+base64 and get back a path to use as another tool's `input_path`, then `download_file` to pull a
+result back out the same way. Both are restricted to `GIS_TOOLKIT_DATA_DIR` — they refuse to
+read/write outside it. Note `download_file` returns one file at a time, so prefer single-file
+output formats (`.geojson`, `.gpkg`) over multi-file ones (`.shp` + its sidecars) when a remote
+client needs to retrieve the result.
 
 ## Connecting a client
 
