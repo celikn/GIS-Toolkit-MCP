@@ -9,5 +9,6 @@
       "label": "GIS Toolkit MCP",
       "onAutoForward": "notify"
     }
-  }
+  },
+  "postStartCommand": "bash -c 'nohup python3 server.py > /tmp/gis-toolkit-mcp.log 2>&1 &'"
 }
