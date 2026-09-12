@@ -15,8 +15,11 @@ Env vars:
     GIS_TOOLKIT_PORT      port for http-based transports (default: 9020)
 """
 import os
+from pathlib import Path
 
 from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 
 from tools import io_ops, nearest, raster_ops, vector_ops
 
@@ -38,6 +41,58 @@ for fn in (
     io_ops.download_file,
 ):
     mcp.add_tool(fn)
+
+
+# Plain HTTP routes alongside the MCP tools, for humans (or a chat UI's browser)
+# rather than an MCP client: /upload lets someone drop a file in without base64
+# in a chat message, /files/<path> gives a real clickable download link instead
+# of raw base64 in a tool response.
+
+_UPLOAD_FORM_HTML = """<!doctype html>
+<title>GIS Toolkit MCP — Upload</title>
+<h2>Upload a file</h2>
+<form method="post" action="/upload" enctype="multipart/form-data">
+  <input type="file" name="file" required>
+  <button type="submit">Upload</button>
+</form>
+"""
+
+
+@mcp.custom_route("/upload", methods=["GET"])
+async def upload_form(request: Request) -> HTMLResponse:
+    return HTMLResponse(_UPLOAD_FORM_HTML)
+
+
+@mcp.custom_route("/upload", methods=["POST"])
+async def upload_handler(request: Request) -> JSONResponse:
+    form = await request.form()
+    upload = form.get("file")
+    if upload is None:
+        return JSONResponse({"error": "missing 'file' field"}, status_code=400)
+
+    safe_name = Path(upload.filename).name
+    if not safe_name:
+        return JSONResponse({"error": "empty filename"}, status_code=400)
+
+    target_dir = io_ops._safe_path("uploads")
+    target_dir.mkdir(parents=True, exist_ok=True)
+    out_path = target_dir / safe_name
+
+    content = await upload.read()
+    out_path.write_bytes(content)
+    return JSONResponse({"output_path": str(out_path), "size_bytes": len(content)})
+
+
+@mcp.custom_route("/files/{path:path}", methods=["GET"])
+async def download_route(request: Request):
+    try:
+        target = io_ops._safe_path(request.path_params["path"])
+    except ValueError:
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+    if not target.is_file():
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return FileResponse(target, filename=target.name)
+
 
 if __name__ == "__main__":
     transport = os.environ.get("GIS_TOOLKIT_TRANSPORT", "streamable-http")

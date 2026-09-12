@@ -64,12 +64,20 @@ same host), just mount your data directory and point `GIS_TOOLKIT_DATA_DIR` (or 
 paths) accordingly — no code changes needed.
 
 If your client does **not** share a filesystem with the server (e.g. a remote user calling a
-publicly hosted instance from their own machine), use `upload_file` to push a local file in as
-base64 and get back a path to use as another tool's `input_path`, then `download_file` to pull a
-result back out the same way. Both are restricted to `GIS_TOOLKIT_DATA_DIR` — they refuse to
-read/write outside it. Note `download_file` returns one file at a time, so prefer single-file
-output formats (`.geojson`, `.gpkg`) over multi-file ones (`.shp` + its sidecars) when a remote
-client needs to retrieve the result.
+publicly hosted instance from their own machine), there are two ways to get data in and out:
+
+- **MCP tools**: `upload_file` takes base64 content and returns a path to use as another tool's
+  `input_path`; `download_file` reads a path back out as base64. Good for an MCP client or an
+  LLM driving the tools programmatically.
+- **Plain HTTP** (for a human, or a chat UI's browser — base64 in a chat message is unwieldy):
+  `GET /upload` serves a small HTML form to pick and submit a file directly; `GET
+  /files/<path>` streams a file back with `Content-Disposition: attachment`, so pasting that URL
+  as a link gives a real, clickable download in any browser.
+
+Both paths are restricted to `GIS_TOOLKIT_DATA_DIR` — they refuse to read/write outside it. Note
+the base64 tools return one file at a time, so prefer single-file output formats (`.geojson`,
+`.gpkg`) over multi-file ones (`.shp` + its sidecars) when a remote client needs to retrieve the
+result.
 
 ## Connecting a client
 
