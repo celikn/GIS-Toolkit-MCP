@@ -1,0 +1,13 @@
+{
+  "name": "gis-toolkit-mcp",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+  "forwardPorts": [9020],
+  "portsAttributes": {
+    "9020": {
+      "label": "GIS Toolkit MCP",
+      "onAutoForward": "notify"
+    }
+  }
+}

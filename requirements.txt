@@ -1,0 +1,8 @@
+fastmcp==4.0.3
+geopandas==1.1.4
+shapely==2.1.2
+rasterio==1.5.1
+pyproj==3.8.0
+numpy==2.5.2
+rasterstats==0.21.0
+scipy==1.18.1
